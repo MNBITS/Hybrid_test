@@ -5,8 +5,8 @@ import matplotlib.pyplot as mp
 
 
 exp = 0.6
-grain = UserInputs(10, 8, 10, 60, 30)
-fuel = FuelData(120, 996, 0, exp, 2)          # Go, c_star, coeff
+grain = UserInputs(10, 8, 10, 60, 30)     # Outer dia, Core Dia, length, throat area, step size
+fuel = FuelData(120, 996, exp, 10, 2000)      # Go, c_star, exponent(burn rate), coefficient, burn rate
 
 # Grain Volume pi(D2 - d2)/4*length
 grainVol = np.pi*(pow(grain.outerDia, 2) - pow(grain.coreDia, 2))*0.25*grain.length
@@ -14,19 +14,18 @@ grainVol = np.pi*(pow(grain.outerDia, 2) - pow(grain.coreDia, 2))*0.25*grain.len
 # Grain Mass grainVol*Density
 fuelMass = grainVol*fuel.density
 
+
 massEjected = 0
 m_dot  = 56
 stepNum = 0
 Isp  = 10
 
-
 print(massEjected)
 print(fuelMass)
 
-
 time = np.zeros(grain.stepSize, dtype = float)
 
-while (stepNum<grain.stepSize):
+while ():
     
     #initiate radius array R(t)
     radius = np.empty(grain.stepSize, dtype = float)
@@ -61,12 +60,10 @@ while (stepNum<grain.stepSize):
     thrust[stepNum] = m_dot_tot*Isp*fuel.Go
 
 
-
     portArea = np.pi*(pow(grain.outerDia, 2) - pow(4*radius[stepNum], 2))*0.25
     stepNum+=1
     massEjected = m_dot*grain.stepSize*stepNum
-    print("mass ejected: \n")
-    print(massEjected)
+    fuelMass = np.pi*fuel.density*grain.length*(pow(radius[stepNum], 2) - pow(grain.coreDia, 2))
     
     #print(radius[stepNum])
     print("\n")
