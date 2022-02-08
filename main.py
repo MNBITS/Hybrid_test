@@ -2,8 +2,6 @@ from Inputs import UserInputs
 from propParam import FuelData
 import numpy as np
 import matplotlib.pyplot as mp
-
-guess_thrust=int(input())
 exp = 0.6
 grain = UserInputs(10, 8, 10, 60, 30)     # Outer dia, Core Dia, length, throat area, step size
 fuel = FuelData(120, 996, exp, 10, 2000,guess_thrust)      # Go, c_star, exponent(burn rate), coefficient, burn rate,fuel_user
@@ -62,17 +60,11 @@ while (stepNum<grain.stepSize):
         thrust[stepNum]=thrust[stepNum]*(1-(0.5)**c)
     else:
          thrust[stepNum]=thrust[stepNum]*(1+(0.5)**c)
-         
-        
-    
     c=c+1;
-
-
     portArea = np.pi*(pow(grain.outerDia, 2) - pow(4*radius[stepNum], 2))*0.25
     stepNum+=1
     massEjected = m_dot*grain.stepSize*stepNum
     #fuelMass = np.pi*fuel.density*grain.length*((radius[stepNum]**2) - (grain.coreDia** 2))
-    
     #print(radius[stepNum])
     print("\n")
 
