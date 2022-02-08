@@ -7,13 +7,14 @@ grain.setChamberPressure()
 
 
 class FuelData():
-    def __init__(self, Go, c_star, exp, density, coeff):
+    def __init__(self, Go, c_star, exp, density, coeff,thrust_user):
         self.Go = Go
         self.c_star = c_star
         self.mf_dot = Go*grain.chamberP*grain.At/c_star
         self.coeff = coeff
         self.exp = exp
         self.density = density
+        self.thrust_user=thrust_user
 
     
 
