@@ -1,7 +1,7 @@
 
 from Inputs import UserInputs
 
-grain = UserInputs(10, 10, 10, 60, 30)
+grain = UserInputs(10, 10, 10, 60, 30,5100)
 grain.setChamberPressure()
 
 
@@ -14,6 +14,7 @@ class FuelData():
         self.coeff = coeff
         self.exp = exp
         self.density = density
+        self.thrust_user=thrust_user
 
     
 
