@@ -1,4 +1,4 @@
-from pyparsing import null_debug_action
+
 from Inputs import UserInputs
 from propParam import FuelData
 import numpy as np
@@ -11,7 +11,7 @@ length = 20
 stepSize = 3
 
 
-Thrust = 1000
+Thrust_req = 1000
 Cf = 1
 useBarlow = True
 fos = 2
@@ -42,7 +42,7 @@ k = 1.430
 fuel = FuelData(Go, exp, density, coeff, combustionTemp, k)      # Go, c_star, exponent(burn rate), coefficient, burn rate
 
 #Throat Area Calculation 
-throatArea = Thrust/fuel.calculate_Cf()*setChamberPressure(True,3)
+throatArea = Thrust_req/fuel.calculate_Cf()*setChamberPressure(True,3)
 
 
 grain = UserInputs(outerDia, coreDia, length, throatArea, stepSize)     # Outer dia, Core Dia, length, throat area, step size
@@ -130,7 +130,7 @@ while(stepNum < totalSteps):
     OF_ratio[stepNum] = 1/(2*fuel.density*grain.length*a)*pow(m_dot_ox[stepNum]/np.pi , 1-fuel.exp)*pow(radius[stepNum], 2*fuel.exp - 1)
 
     #Thrust Calculation
-    thrust[stepNum] = m_dot_t[stepNum]*Isp*fuel.Go
+    #thrust[stepNum] = m_dot_t[stepNum]*Isp*fuel.Go
 
     #Calculate Port Area For  next iteration
     portArea = np.pi*(pow(grain.outerDia, 2) - pow(4*radius[stepNum], 2))*0.25
@@ -141,5 +141,15 @@ while(stepNum < totalSteps):
     print("\n")
     print("Loop Exited")
 
+# Draw Plots
 mp.plot(radius, time, color = "red")
+mp.show()
+
+mp.plot(thrust, time, color = "red")
+mp.show()
+
+mp.plot(OF_ratio, time, color = "red")
+mp.show()
+
+mp.plot(regRate, time, color = "red")
 mp.show()
