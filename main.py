@@ -34,11 +34,18 @@ coeff = 0
 combustionTemp = 0
 k = 0
 
+
 grain = UserInputs(outerDia, coreDia, length, throatArea, stepSize)     # Outer dia, Core Dia, length, throat area, step size
 fuel = FuelData(Go, exp, density, coeff, combustionTemp, k)      # Go, c_star, exponent(burn rate), coefficient, burn rate
 
 # Grain Volume pi(D2 - d2)/4*length
 grainVol = np.pi*((pow(grain.outerDia, 2) - pow(grain.coreDia, 2)))*0.25*grain.length
+
+#Port to throat
+Va = np.pi*grain.outerDia*grain.length - grainVol
+V1 = grainVol/Va
+portTothroat = np.pi*grain.outerDia**2*(1-V1)/(4*throatArea)
+
 
 #Port to throat
 Va = np.pi*grain.outerDia*grain.length - grainVol
@@ -88,7 +95,9 @@ while(stepNum < totalSteps):
 
 
     thrust = np.zeros(grain.stepSize, dtype = float)
-    thrust[stepNum] = m_dot_t[stepNum]*Isp*fuel.Go*(1 + (-1)**random.uniform(1, 2)*random.random()/33)
+
+    thrust[stepNum] = m_dot_t[stepNum]*Isp*fuel.Go
+
 
 
     portArea = np.pi*(pow(grain.outerDia, 2) - pow(4*radius[stepNum], 2))*0.25
