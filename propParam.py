@@ -1,5 +1,4 @@
 
-from math import comb
 from Inputs import UserInputs
 
 grain = UserInputs(10, 10, 10, 60, 30)
