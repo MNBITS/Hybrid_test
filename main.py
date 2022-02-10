@@ -1,19 +1,23 @@
+from pyparsing import null_debug_action
 from Inputs import UserInputs
 from propParam import FuelData
 import numpy as np
 import matplotlib.pyplot as mp
-from random import random
 
-coreDia = 0
+
+coreDia = 4
 outerDia = 10
-length = 0
-stepSize = 0.
+length = 20
+stepSize = 3
+
+
 Thrust = 1000
 Cf = 1
 useBarlow = True
 fos = 2
-maxStress = 0
-Pc = 0
+maxStress = 230
+Pc = 220
+
 
 def setChamberPressure(useBarlow, fos):
     if(useBarlow):
@@ -23,20 +27,26 @@ def setChamberPressure(useBarlow, fos):
         Pc = 2000
     return Pc
 
-throatArea = Thrust/Cf*setChamberPressure(20,30)
 
-exp = 0.2
+
+exp = 0.62
 Go = 120
-a = 0
-burnRate = 0
-density = 0
-coeff = 0
-combustionTemp = 0
-k = 0
+a = 0.117
+burnRate = 30
+density = 3450
+coeff = 20
+combustionTemp = 1000
+k = 1.430
+
+
+fuel = FuelData(Go, exp, density, coeff, combustionTemp, k)      # Go, c_star, exponent(burn rate), coefficient, burn rate
+
+#Throat Area Calculation 
+throatArea = Thrust/fuel.calculate_Cf()*setChamberPressure(True,3)
 
 
 grain = UserInputs(outerDia, coreDia, length, throatArea, stepSize)     # Outer dia, Core Dia, length, throat area, step size
-fuel = FuelData(Go, exp, density, coeff, combustionTemp, k)      # Go, c_star, exponent(burn rate), coefficient, burn rate
+
 
 # Grain Volume pi(D2 - d2)/4*length
 grainVol = np.pi*((pow(grain.outerDia, 2) - pow(grain.coreDia, 2)))*0.25*grain.length
@@ -47,17 +57,11 @@ V1 = grainVol/Va
 portTothroat = np.pi*grain.outerDia**2*(1-V1)/(4*throatArea)
 
 
-#Port to throat
-Va = np.pi*grain.outerDia*grain.length - grainVol
-V1 = grainVol/Va
-portTothroat = np.pi*grain.outerDia**2*(1-V1)/(4*throatArea)
-
-
-# Grain Mass grainVol*Density
+#Grain Mass grainVol*Density
 fuelMass = grainVol*fuel.density
 
-m_dot = 90
-Isp = 0
+
+Isp = 30
 BurnTime = 20
 
 totalSteps = int(BurnTime/stepSize)
@@ -65,49 +69,77 @@ totalSteps = int(BurnTime/stepSize)
 #initialize Time array
 time = np.zeros(totalSteps, dtype = float)
 
+#initiate arrays
+radius = np.empty(totalSteps, dtype = float)
+m_dot_ox = np.zeros(totalSteps, dtype = float)
+m_dot_f = np.zeros(totalSteps, dtype = float)
+m_dot_t = np.zeros(totalSteps, dtype = float)
+Ph = np.zeros(totalSteps, dtype = float)
+OF_ratio = np.zeros(totalSteps, dtype = float)
+regRate = np.zeros(totalSteps, dtype = float)
+Gox = np.zeros(totalSteps, dtype = float)
+Ptk = np.zeros(totalSteps, dtype = float)
+thrust = np.zeros(grain.stepSize, dtype = float)
+
+
+#OF_desired = float(8)
+Z = 1 #Resistence in oxidiser path
+
+#for#OF_ratio = OF_desired
+
+#Calculate Initial Values at t = 0
+
+
 stepNum = 0
 while(stepNum < totalSteps):
     
-    #initiate arrays
-    radius = np.empty(totalSteps, dtype = float)
-    m_dot_ox = np.zeros(totalSteps, dtype = float)
-    m_dot_f = np.zeros(totalSteps, dtype = float)
-    m_dot_t = np.zeros(totalSteps, dtype = float)
-    Ph = np.zeros(totalSteps, dtype = float)
-    OF_ratio = np.zeros(grain.stepSize, dtype = float)
-     
-    #Calculate m_dot_t
-    m_dot_t[stepNum] = fuel.Go*Pc*throatArea/(fuel.calculateC_star)
-    
     #Calculate time
     time[stepNum] = grain.stepSize*stepNum
+     
+    #Calculate m_dot_t
+    m_dot_t[stepNum] = Pc*grain.At/(fuel.calculateC_star())
 
     #Calculate Ph
-    Ph[stepNum] = [1+0.5*pow(fuel.k*pow(2/fuel.k+1), fuel.k+1/fuel.k-1)]
+    Ph[stepNum] = (1+0.5*(pow(fuel.k*pow(2/fuel.k+1, fuel.k+1/fuel.k-1) , 0.5)*(1/portTothroat)**2))*Pc
 
-    #m_dot_f[stepNum] = 2*np.pi*fuel.density*grain.length*alpha*pow(radius[stepNum], 1-2*fuel.exp)
-
-
-
+    #Calculate M_dotf
+    d = 1+OF_ratio[stepNum]
 
 
-    #m_dot_tot[stepNum] = m_dot_f[stepNum] + m_dot_ox[stepNum]
+    #Calculate Mass flow rate of Oxidiser
+    m_dot_ox[stepNum] = OF_ratio[stepNum]*m_dot_f[stepNum]
 
+    #Calculate G_ox
+    Gox[stepNum] = m_dot_ox[stepNum]/grain.portArea
 
-    thrust = np.zeros(grain.stepSize, dtype = float)
+    #Calculate regression rate
+    regRate[stepNum] = a*pow(Gox[stepNum], fuel.exp)
+    
 
+    #Calculate burn time
+    if (stepNum == 0):
+        BurnTime = 0.5*(grain.outerDia - grain.coreDia)/(regRate[stepNum])
+    
+    #Calculate Pressure of tank
+    Ptk = pow(m_dot_ox[stepNum], 2)*Z + Ph[stepNum]
+
+    #Calculate radius
+    radius[stepNum] = pow(a*(2*fuel.exp + 1)*pow(m_dot_ox[stepNum]/np.pi , fuel.exp)*time[stepNum] + pow(coreDia/2, 2*fuel.exp + 1), 1/(2*fuel.exp +1))
+
+    #Calculate instantaneous mixture ratio
+    OF_ratio[stepNum] = 1/(2*fuel.density*grain.length*a)*pow(m_dot_ox[stepNum]/np.pi , 1-fuel.exp)*pow(radius[stepNum], 2*fuel.exp - 1)
+
+    #Thrust Calculation
     thrust[stepNum] = m_dot_t[stepNum]*Isp*fuel.Go
 
-
-
+    #Calculate Port Area For  next iteration
     portArea = np.pi*(pow(grain.outerDia, 2) - pow(4*radius[stepNum], 2))*0.25
     stepNum+=1
-    massEjected = m_dot*grain.stepSize*stepNum
+    #massEjected = m_dot*grain.stepSize*stepNum
     fuelMass = np.pi*fuel.density*grain.length*(pow(radius[stepNum], 2) - pow(grain.coreDia, 2))
-    burnRate=m_dot_t[stepNum]/((throatArea)*density)
-    
-    #print(radius[stepNum])
-    print("\n")
 
-mp.plot(thrust, time, color = "red")
+    print("\n")
+    print("Loop Exited")
+
+mp.plot(radius, time, color = "red")
 mp.show()
