@@ -2,19 +2,19 @@ from Inputs import UserInputs
 from propParam import FuelData
 import numpy as np
 import matplotlib.pyplot as mp
+from random import random
 
 coreDia = 0
 outerDia = 10
 length = 0
 stepSize = 0.
-
 Thrust = 1000
 Cf = 1
-
 useBarlow = True
 fos = 2
 maxStress = 0
 Pc = 0
+
 def setChamberPressure(useBarlow, fos):
     if(useBarlow):
         Pc = 2*maxStress*(outerDia - coreDia)/(outerDia*fos)
@@ -23,7 +23,7 @@ def setChamberPressure(useBarlow, fos):
         Pc = 2000
     return Pc
 
-throatArea = Thrust/Cf*setChamberPressure()
+throatArea = Thrust/Cf*setChamberPressure(20,30)
 
 exp = 0.2
 Go = 120
@@ -34,11 +34,18 @@ coeff = 0
 combustionTemp = 0
 k = 0
 
+
 grain = UserInputs(outerDia, coreDia, length, throatArea, stepSize)     # Outer dia, Core Dia, length, throat area, step size
 fuel = FuelData(Go, exp, density, coeff, combustionTemp, k)      # Go, c_star, exponent(burn rate), coefficient, burn rate
 
 # Grain Volume pi(D2 - d2)/4*length
-grainVol = np.pi*(pow(grain.outerDia, 2) - pow(grain.coreDia, 2))*0.25*grain.length
+grainVol = np.pi*((pow(grain.outerDia, 2) - pow(grain.coreDia, 2)))*0.25*grain.length
+
+#Port to throat
+Va = np.pi*grain.outerDia*grain.length - grainVol
+V1 = grainVol/Va
+portTothroat = np.pi*grain.outerDia**2*(1-V1)/(4*throatArea)
+
 
 #Port to throat
 Va = np.pi*grain.outerDia*grain.length - grainVol
@@ -88,19 +95,19 @@ while(stepNum < totalSteps):
 
 
     thrust = np.zeros(grain.stepSize, dtype = float)
+
     thrust[stepNum] = m_dot_t[stepNum]*Isp*fuel.Go
+
 
 
     portArea = np.pi*(pow(grain.outerDia, 2) - pow(4*radius[stepNum], 2))*0.25
     stepNum+=1
     massEjected = m_dot*grain.stepSize*stepNum
     fuelMass = np.pi*fuel.density*grain.length*(pow(radius[stepNum], 2) - pow(grain.coreDia, 2))
+    burnRate=m_dot_t[stepNum]/((throatArea)*density)
     
     #print(radius[stepNum])
     print("\n")
 
 mp.plot(thrust, time, color = "red")
 mp.show()
-
-
-
