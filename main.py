@@ -52,7 +52,7 @@ grain = UserInputs(outerDia, coreDia, length, throatArea, stepSize)     # Outer 
 grainVol = np.pi*((pow(grain.outerDia, 2) - pow(grain.coreDia, 2)))*0.25*grain.length
 
 #Port to throat
-Va = np.pi*grain.outerDia*grain.length - grainVol
+Va = np.pi*(grain.outerDia**2)*grain.length/*0.25 - grainVol
 V1 = grainVol/Va
 portTothroat = np.pi*grain.outerDia**2*(1-V1)/(4*throatArea)
 
