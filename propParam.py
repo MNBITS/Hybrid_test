@@ -31,8 +31,16 @@ class FuelData():
 
     def calculate_Cf(self):
         alpha = self.k+1/self.k-1
+        print("alpha: ", alpha)
         beta = 2/self.k+1
-        Cf=((2*self.k**2/(self.k-1))*((beta)**(alpha))*(1-(14.7/grain.chamberP)**((self.k-1)/self.k)))**0.5
+        gamma = 2*pow(self.k, 2)/self.k - 1
+        eta = pow((100000)/(grain.chamberP), (self.k - 1)/(self.k))
+        print("eta: ", eta)
+        #Cf=((2*self.k**2/(self.k-1))*((beta)**(alpha))*(1-(100000/grain.chamberP)**((self.k-1)/self.k)))**0.5
+
+        Cf = pow(gamma*pow(beta, alpha)*(1-eta), 0.5)
+        print("Cf: ", Cf)
+    
         return Cf
        
     

@@ -5,10 +5,10 @@ import numpy as np
 import matplotlib.pyplot as mp
 
 
-coreDia = 4
-outerDia = 10
-length = 20
-stepSize = 3
+coreDia = 0.052
+outerDia = 0.067
+length = 0.6
+
 
 
 Thrust_req = 1000
@@ -16,7 +16,7 @@ Cf = 1
 useBarlow = True
 fos = 2
 maxStress = 230
-Pc = 220
+Pc = 2068000
 
 
 def setChamberPressure(useBarlow, fos):
@@ -24,7 +24,7 @@ def setChamberPressure(useBarlow, fos):
         Pc = 2*maxStress*(outerDia - coreDia)/(outerDia*fos)
     
     else:
-        Pc = 2000
+        Pc = 2.068e+6
     return Pc
 
 
@@ -33,19 +33,20 @@ exp = 0.62
 Go = 120
 a = 0.117
 burnRate = 30
-density = 3450
+density = 788.6
 coeff = 20
 combustionTemp = 1000
-k = 1.430
+k = 1.250
 
 
 fuel = FuelData(Go, exp, density, coeff, combustionTemp, k)      # Go, c_star, exponent(burn rate), coefficient, burn rate
 
 #Throat Area Calculation 
-throatArea = Thrust_req/fuel.calculate_Cf()*setChamberPressure(True,3)
+throatArea = (Thrust_req)/(fuel.calculate_Cf()*Pc)
 
+print("Throat area: ", throatArea)
 
-grain = UserInputs(outerDia, coreDia, length, throatArea, stepSize)     # Outer dia, Core Dia, length, throat area, step size
+grain = UserInputs(outerDia, coreDia, length, throatArea, 0)     # Outer dia, Core Dia, length, throat area, step size
 
 
 # Grain Volume pi(D2 - d2)/4*length
@@ -62,9 +63,20 @@ fuelMass = grainVol*fuel.density
 
 
 Isp = 30
-BurnTime = 20
+OF_init = 8
+m_t = Pc*throatArea/fuel.calculateC_star()
+m_ox = m_t/(OF_init + 1)
+Go_init = (m_ox)/(0.25*np.pi*pow(grain.coreDia, 2))
+regRate_init = a*pow(Go_init, exp)
 
-totalSteps = int(BurnTime/stepSize)
+BurnTime = (grain.outerDia - grain.coreDia)/(2*regRate_init)
+
+totalSteps = 30
+stepSize = BurnTime/totalSteps
+
+print("Burn Time: ", BurnTime)
+
+
 
 #initialize Time array
 time = np.zeros(totalSteps, dtype = float)
@@ -89,12 +101,14 @@ Z = 1 #Resistence in oxidiser path
 
 #Calculate Initial Values at t = 0
 
+#" " "  "
 
 stepNum = 0
 while(stepNum < totalSteps):
     
     #Calculate time
-    time[stepNum] = grain.stepSize*stepNum
+    time[stepNum] = stepSize*stepNum
+    print("time:" , time)
      
     #Calculate m_dot_t
     m_dot_t[stepNum] = Pc*grain.At/(fuel.calculateC_star())
@@ -136,10 +150,12 @@ while(stepNum < totalSteps):
     portArea = np.pi*(pow(grain.outerDia, 2) - pow(4*radius[stepNum], 2))*0.25
     stepNum+=1
     #massEjected = m_dot*grain.stepSize*stepNum
-    fuelMass = np.pi*fuel.density*grain.length*(pow(radius[stepNum], 2) - pow(grain.coreDia, 2))
+    #fuelMass = np.pi*fuel.density*grain.length*(pow(radius[stepNum], 2) - pow(grain.coreDia, 2))
 
     print("\n")
-    print("Loop Exited")
+  
+
+print(radius)
 
 # Draw Plots
 mp.plot(radius, time, color = "red")
@@ -152,4 +168,8 @@ mp.plot(OF_ratio, time, color = "red")
 mp.show()
 
 mp.plot(regRate, time, color = "red")
+<<<<<<< Updated upstream
 mp.show()
+=======
+mp.show() 
+>>>>>>> Stashed changes

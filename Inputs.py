@@ -16,7 +16,7 @@ class UserInputs():
 
 
     def setChamberPressure(self):
-        self.chamberP = 50
+        self.chamberP = 2.068e+6
 
 
 
