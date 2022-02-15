@@ -12,11 +12,10 @@ length = 0.6
 
 
 Thrust_req = 1000
-Cf = 1
 useBarlow = True
 fos = 2
 maxStress = 230
-Pc = 2068000
+Pc = 2.068000e+006
 
 
 def setChamberPressure(useBarlow, fos):
@@ -30,16 +29,16 @@ def setChamberPressure(useBarlow, fos):
 
 
 exp = 0.62
-Go = 120
+#Go = 120
 a = 0.117
 burnRate = 30
 density = 788.6
 coeff = 20
-combustionTemp = 1000
+combustionTemp = 300
 k = 1.250
 
 
-fuel = FuelData(Go, exp, density, coeff, combustionTemp, k)      # Go, c_star, exponent(burn rate), coefficient, burn rate
+fuel = FuelData(exp, density, coeff, combustionTemp, k)      # Go, c_star, exponent(burn rate), coefficient, burn rate
 
 #Throat Area Calculation 
 throatArea = (Thrust_req)/(fuel.calculate_Cf()*Pc)
@@ -53,7 +52,7 @@ grain = UserInputs(outerDia, coreDia, length, throatArea, 0)     # Outer dia, Co
 grainVol = np.pi*((pow(grain.outerDia, 2) - pow(grain.coreDia, 2)))*0.25*grain.length
 
 #Port to throat
-Va = np.pi*(grain.outerDia**2)*grain.length/*0.25 - grainVol
+Va = np.pi*(grain.outerDia**2)*grain.length*0.25 - grainVol
 V1 = grainVol/Va
 portTothroat = np.pi*grain.outerDia**2*(1-V1)/(4*throatArea)
 
@@ -64,14 +63,23 @@ fuelMass = grainVol*fuel.density
 
 Isp = 30
 OF_init = 8
-m_t = Pc*throatArea/fuel.calculateC_star()
-m_ox = m_t/(OF_init + 1)
+g = 9.81
+c_star = fuel.calculateC_star()
+
+print("c_star: ", c_star)
+portArea = np.pi*0.25*pow(grain.coreDia, 2)
+print("port area: ", portArea)
+
+m_t = (g*Pc*portArea)/(c_star)
+print("mt: ", m_t)
+m_ox = (m_t)/(OF_init + 1)
 Go_init = (m_ox)/(0.25*np.pi*pow(grain.coreDia, 2))
 regRate_init = a*pow(Go_init, exp)
+print("regrate: ", regRate_init)
 
 BurnTime = (grain.outerDia - grain.coreDia)/(2*regRate_init)
 
-totalSteps = 30
+totalSteps = 50
 stepSize = BurnTime/totalSteps
 
 print("Burn Time: ", BurnTime)
@@ -108,7 +116,7 @@ while(stepNum < totalSteps):
     
     #Calculate time
     time[stepNum] = stepSize*stepNum
-    print("time:" , time)
+    #print("time:" , time)
      
     #Calculate m_dot_t
     m_dot_t[stepNum] = Pc*grain.At/(fuel.calculateC_star())
@@ -131,8 +139,8 @@ while(stepNum < totalSteps):
     
 
     #Calculate burn time
-    if (stepNum == 0):
-        BurnTime = 0.5*(grain.outerDia - grain.coreDia)/(regRate[stepNum])
+    #if (stepNum == 0):
+     #   BurnTime = 0.5*(grain.outerDia - grain.coreDia)/(regRate[stepNum])
     
     #Calculate Pressure of tank
     Ptk = pow(m_dot_ox[stepNum], 2)*Z + Ph[stepNum]
@@ -152,7 +160,7 @@ while(stepNum < totalSteps):
     #massEjected = m_dot*grain.stepSize*stepNum
     #fuelMass = np.pi*fuel.density*grain.length*(pow(radius[stepNum], 2) - pow(grain.coreDia, 2))
 
-    print("\n")
+    #print("\n")
   
 
 print(radius)
@@ -168,8 +176,8 @@ mp.plot(OF_ratio, time, color = "red")
 mp.show()
 
 mp.plot(regRate, time, color = "red")
-<<<<<<< Updated upstream
-mp.show()
-=======
+
 mp.show() 
->>>>>>> Stashed changes
+
+
+
