@@ -1,7 +1,6 @@
-
 from Inputs import UserInputs
 
-grain = UserInputs(10, 10, 10, 60, 30)
+grain = UserInputs(10, 10, 10, 60, 30,10,10,10,10,10)
 grain.setChamberPressure()
 R = 332
 
@@ -9,7 +8,7 @@ R = 332
 
 class FuelData():
 
-    def __init__(self, exp, density, coeff, combustionTemp,k):
+    def __init__(self, exp, density, coeff, combustionTemp,k,burnRate,a,Isp,OF_init):
 
         #self.Go = Go
         #self.mf_dot = Go*grain.chamberP*grain.At/c_star
@@ -18,6 +17,12 @@ class FuelData():
         self.density = density
         self.combustionTemp = combustionTemp
         self.k = k
+        self.burnRate=burnRate
+        self.a=a
+        self.Isp=Isp
+        self.OF_init=OF_init
+        
+        
 
 
     def calculateC_star(self):
