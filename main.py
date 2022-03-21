@@ -1,4 +1,3 @@
-
 from Inputs import UserInputs
 from propParam import FuelData
 import numpy as np
@@ -36,16 +35,22 @@ density = 788.6
 coeff = 20
 combustionTemp = 300
 k = 1.250
+Isp = 30
+OF_init = 8
+stepNum = 0
+Z = 1 #Resistence in oxidiser path
+g = 9.81
+totalSteps = 50
 
 
-fuel = FuelData(exp, density, coeff, combustionTemp, k)      # Go, c_star, exponent(burn rate), coefficient, burn rate
+fuel = FuelData(exp, density, coeff, combustionTemp, k,burnRate,a,Isp,OF_init)      # Go, c_star, exponent(burn rate), coefficient, burn rate
 
 #Throat Area Calculation 
 throatArea = (Thrust_req)/(fuel.calculate_Cf()*Pc)
 
 print("Throat area: ", throatArea)
 
-grain = UserInputs(outerDia, coreDia, length, throatArea, 0)     # Outer dia, Core Dia, length, throat area, step size
+grain = UserInputs(outerDia, coreDia, length, throatArea, 0,Thrust_req,totalSteps,useBarlow,g,fos,stepNum,Z)     # Outer dia, Core Dia, length, throat area, step size
 
 
 # Grain Volume pi(D2 - d2)/4*length
@@ -61,16 +66,16 @@ portTothroat = np.pi*grain.outerDia**2*(1-V1)/(4*throatArea)
 fuelMass = grainVol*fuel.density
 
 
-Isp = 30
-OF_init = 8
-g = 9.81
+
+
+
 c_star = fuel.calculateC_star()
 
 print("c_star: ", c_star)
 portArea = np.pi*0.25*pow(grain.coreDia, 2)
 print("port area: ", portArea)
 
-m_t = (g*Pc*portArea)/(c_star)
+m_t = (g*Pc*throatArea)/(c_star)
 print("mt: ", m_t)
 m_ox = (m_t)/(OF_init + 1)
 Go_init = (m_ox)/(0.25*np.pi*pow(grain.coreDia, 2))
@@ -79,7 +84,7 @@ print("regrate: ", regRate_init)
 
 BurnTime = (grain.outerDia - grain.coreDia)/(2*regRate_init)
 
-totalSteps = 50
+
 stepSize = BurnTime/totalSteps
 
 print("Burn Time: ", BurnTime)
@@ -103,7 +108,7 @@ thrust = np.zeros(grain.stepSize, dtype = float)
 
 
 #OF_desired = float(8)
-Z = 1 #Resistence in oxidiser path
+
 
 #for#OF_ratio = OF_desired
 
@@ -111,7 +116,7 @@ Z = 1 #Resistence in oxidiser path
 
 #" " "  "
 
-stepNum = 0
+
 while(stepNum < totalSteps):
     
     #Calculate time
@@ -178,6 +183,5 @@ mp.show()
 mp.plot(regRate, time, color = "red")
 
 mp.show() 
-
 
 
